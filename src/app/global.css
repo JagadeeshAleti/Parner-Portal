@@ -1,0 +1,35 @@
+/* global.css */
+
+.main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.partners {
+  list-style: none;
+  padding: 0;
+}
+
+.partner {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.partner:hover {
+  background-color: #f0f0f0;
+}
+
+.partner p {
+  margin: 0;
+}
+
+/* Add more styles as needed */
