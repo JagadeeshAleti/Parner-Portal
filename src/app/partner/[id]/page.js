@@ -11,6 +11,7 @@ export default function Page(props) {
   const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [popupBtnName, setPopupBtnName] = useState(null);
   const [creatingUser, setCreatingUser] = useState(false);
+  const [editUser, setEditUser] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -51,14 +52,11 @@ export default function Page(props) {
     });
   }
 
-  async function handleEdit(userid) {
-    try {
-      const { data } = await axios.get(`http://localhost:3001/admin/partner/${id}/users/${userid}`);
-      setFormData(data);
-      setShowCreatePopup(true);
-    } catch (err) {
-      console.error("Error is : ", err);
-    }
+  async function handleEdit(u, i) {
+    setUserId(u?.id);
+    setPopupBtnName("Edit");
+    setFormData(users[i]);
+    setShowCreatePopup(true);
   };
 
   async function handleSubmit(e) {
@@ -74,6 +72,7 @@ export default function Page(props) {
         setCreatingUser(true);
         await axios.post(`http://localhost:3001/admin/partner/${id}/users`, formData, headers);
       } else if (popupBtnName === "Edit") {
+        setEditUser(true);
         await axios.patch(`http://localhost:3001/admin/partner/${id}/users/${userId}`, formData, headers);
       }
       getUsers();
@@ -86,6 +85,7 @@ export default function Page(props) {
         phone: ""
       });
       setCreatingUser(false);
+      setEditUser(false);
       setShowCreatePopup(false);
     }
 
@@ -93,15 +93,20 @@ export default function Page(props) {
 
   return (
 
-    creatingUser ?
+    (creatingUser || editUser) ?
       <div className="saving">
         <div className="loading-spinner"></div>
-        Saving new user to the database
+        { creatingUser ? "Saving new user to the database" : "Editing user details"}
       </div> :
       <div className="partner-info">
         <div className="header">
           <h1>Partner Details</h1>
           <button onClick={() => {
+            setFormData({
+              name: "",
+              email: "",
+              phone: ""
+            })
             setPopupBtnName("Create");
             setShowCreatePopup(true);
           }}>Create</button>
@@ -133,16 +138,15 @@ export default function Page(props) {
         }
 
         <ul className="users">
-          {users.length > 0 && users.map((u) => (
+          {users.length > 0 && users.map((u, i) => (
             <li key={u.id} className="user">
               <p>{u.name}</p>
               <p>{u.email || "Unavailable"}</p>
               <p>{u.phone || "Unavailable"}</p>
               <div>
                 <button className="edit" onClick={() => {
-                  setUserId(u?.id);
-                  setPopupBtnName("Edit");
-                  handleEdit(u?.id);
+
+                  handleEdit(u, i);
                 }}>Edit</button>
               </div>
             </li>
@@ -151,7 +155,7 @@ export default function Page(props) {
 
         {showCreatePopup && (
           <>
-            <div class="overlay" onClick={() => setShowCreatePopup(false)}></div>
+            <div className="overlay" onClick={() => setShowCreatePopup(false)}></div>
             <div className="create-popup">
               <h2>Create New Entry</h2>
               <form className="form" onSubmit={handleSubmit}>
