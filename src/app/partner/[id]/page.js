@@ -19,8 +19,6 @@ export default function Page(props) {
     phone: ""
   });
 
-  console.log({ showCreatePopup });
-
   useEffect(() => {
     getPartnerDetails();
     getUsers();
@@ -96,20 +94,20 @@ export default function Page(props) {
     (creatingUser || editUser) ?
       <div className="saving">
         <div className="loading-spinner"></div>
-        { creatingUser ? "Saving new user to the database" : "Editing user details"}
+        {creatingUser ? "Saving new user to the database" : "Editing user details"}
       </div> :
       <div className="partner-info">
         <div className="header">
+
           <h1>Partner Details</h1>
-          <button onClick={() => {
-            setFormData({
-              name: "",
-              email: "",
-              phone: ""
-            })
-            setPopupBtnName("Create");
-            setShowCreatePopup(true);
-          }}>Create</button>
+          <div className="btns">
+            <button onClick={() => window.location.href = `/`}>Partners</button>
+            <button onClick={() => {
+              setFormData({})
+              setPopupBtnName("Create");
+              setShowCreatePopup(true);
+            }}>Create</button>
+          </div>
         </div>
         {partner &&
           <div className="details">
@@ -137,27 +135,34 @@ export default function Page(props) {
           </div>
         }
 
-        <ul className="users">
-          {users.length > 0 && users.map((u, i) => (
-            <li key={u.id} className="user">
-              <p>{u.name}</p>
-              <p>{u.email || "Unavailable"}</p>
-              <p>{u.phone || "Unavailable"}</p>
-              <div>
-                <button className="edit" onClick={() => {
+        {
+          users.length > 0 ?
+            <ul className="users">
+              {users.length > 0 && users.map((u, i) => (
+                <li key={u.id} className="user">
+                  <p>{u.name}</p>
+                  <p>{u.email || "Unavailable"}</p>
+                  <p>{u.phone || "Unavailable"}</p>
+                  <div>
+                    <button className="edit" onClick={() => {
 
-                  handleEdit(u, i);
-                }}>Edit</button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                      handleEdit(u, i);
+                    }}>Edit</button>
+                  </div>
+                </li>
+              ))}
+            </ul> :
+            <></>
+            // <div className="no-users">No users under this parner</div>
+        }
 
         {showCreatePopup && (
           <>
             <div className="overlay" onClick={() => setShowCreatePopup(false)}></div>
             <div className="create-popup">
-              <h2>Create New Entry</h2>
+              <h2>
+                {popupBtnName === "Create" ? "Create New User" : "Edit User Details"}
+              </h2>
               <form className="form" onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>Name:</label>
