@@ -12,6 +12,7 @@ export default function Page(props) {
   const [popupBtnName, setPopupBtnName] = useState(null);
   const [creatingUser, setCreatingUser] = useState(false);
   const [editUser, setEditUser] = useState(false);
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -43,6 +44,7 @@ export default function Page(props) {
   }
 
   function handleInputChange(e) {
+    setError(null);
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -51,6 +53,7 @@ export default function Page(props) {
   }
 
   async function handleEdit(u, i) {
+    setError(null);
     setUserId(u?.id);
     setPopupBtnName("Edit");
     setFormData(users[i]);
@@ -59,6 +62,22 @@ export default function Page(props) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (!formData.name) {
+      setError("Name is required");
+      return;
+    }
+    if (formData.name.length < 5) {
+      setError("Name atleast contains 5 letters");
+      return;
+    }
+
+    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    if (!emailPattern.test(formData.email)) {
+      setError("Invalid email format");
+      return
+    }
+
     const headers = {
       headers: {
         'Content-Type': 'application/json'
@@ -73,10 +92,6 @@ export default function Page(props) {
         setEditUser(true);
         await axios.patch(`http://localhost:3001/admin/partner/${id}/users/${userId}`, formData, headers);
       }
-      getUsers();
-    } catch (err) {
-      console.error("Error is: ", err);
-    } finally {
       setFormData({
         name: "",
         email: "",
@@ -85,6 +100,15 @@ export default function Page(props) {
       setCreatingUser(false);
       setEditUser(false);
       setShowCreatePopup(false);
+      getUsers();
+    } catch (err) {
+      setCreatingUser(false);
+      setEditUser(false);
+      const { response: { data: { error } } } = err;
+      if (error) {
+        setError(error);
+      }
+      console.error("Error is: ", err);
     }
 
   }
@@ -103,6 +127,7 @@ export default function Page(props) {
           <div className="btns">
             <button onClick={() => window.location.href = `/`}>Partners</button>
             <button onClick={() => {
+              setError(null);
               setFormData({})
               setPopupBtnName("Create");
               setShowCreatePopup(true);
@@ -191,6 +216,7 @@ export default function Page(props) {
                     onChange={handleInputChange}
                   />
                 </div>
+                {error && <div className="form-group error">{error}</div>}
                 <button type="submit" className="submit" onClick={handleSubmit}>{popupBtnName}</button>
                 <button type="submit" className="cancel" onClick={() => setShowCreatePopup(false)}>Cancel</button>
               </form>

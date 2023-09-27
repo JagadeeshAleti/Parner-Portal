@@ -10,7 +10,9 @@ export default function Home() {
   const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [editPartner, setEditPartner] = useState(false);
   const [createPartner, setCreatePartner] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     email: "",
     phone: "",
@@ -37,6 +39,7 @@ export default function Home() {
   };
 
   function handleInputChange(e) {
+    setError(null);
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -45,6 +48,7 @@ export default function Home() {
   }
 
   function handleEdit(p, i) {
+    setError(null);
     setPartnerId(p?.id);
     setFormData(partners[i]);
     setPopupBtnName("Edit");
@@ -53,6 +57,26 @@ export default function Home() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (!formData.id) {
+      setError("ID is required");
+      return;
+    }
+    if (!formData.name) {
+      setError("Name is required");
+      return;
+    }
+    if (formData.name.length < 5) {
+      setError("Name atleast contains 5 letters");
+      return;
+    }
+
+    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    if (!emailPattern.test(formData.email)) {
+      setError("Invalid email format");
+      return
+    }
+
     const headers = {
       headers: {
         'Content-Type': 'application/json'
@@ -64,23 +88,28 @@ export default function Home() {
         setCreatePartner(true);
         await axios.post(`http://localhost:3001/admin/partner`, formData, headers);
       } else if (popupBtnName === "Edit") {
-        setCreatePartner(true);
+        setEditPartner(true);
         const { name, email, phone, region, address } = formData;
         const body = { name, email, phone, region, address };
         await axios.patch(`http://localhost:3001/admin/partner/${partnerId}`, body, headers);
       }
-      getPartners();
-    } catch (err) {
-      console.error("Error is: ", err);
-    } finally {
+      setEditPartner(false);
+      setCreatePartner(false);
       setFormData({
         name: "",
         email: "",
         phone: ""
       });
+      setShowCreatePopup(false);
+      getPartners();
+    } catch (err) {
       setCreatePartner(false);
       setEditPartner(false);
-      setShowCreatePopup(false);
+      const { response: { data: { error } } } = err;
+      if (error) {
+        setError(error);
+      }
+      console.error("Error is: ", err);
     }
 
   }
@@ -95,6 +124,7 @@ export default function Home() {
         <div className="header">
           <h1>Welcome to partner portal app</h1>
           <button onClick={() => {
+            setError(null);
             setFormData({})
             setPopupBtnName("Create");
             setShowCreatePopup(true);
@@ -178,6 +208,8 @@ export default function Home() {
                     onChange={handleInputChange}
                   />
                 </div>
+                {error && <div className="form-group error">{error}</div>}
+
                 <button type="submit" className="submit" onClick={handleSubmit}>{popupBtnName}</button>
                 <button type="submit" className="cancel" onClick={() => setShowCreatePopup(false)}>Cancel</button>
               </form>

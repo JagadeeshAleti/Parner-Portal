@@ -203,3 +203,6 @@ button[type="submit"] {
   color: #888; 
 }
 
+.error {
+  color: #ec1a1a;
+}
