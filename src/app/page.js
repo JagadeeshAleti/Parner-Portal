@@ -1,7 +1,19 @@
 "use client";
 import axios from "axios";
 import './global.css';
+import Select from 'react-select';
 import { useEffect, useState } from "react";
+
+const countries = [
+  { label: "United States" },
+  { label: "Canada" },
+  { label: "India" },
+  { label: "Srilanka" },
+  { label: "Bhutan" },
+  { label: "Italy" },
+  { label: "Seria" },
+  { label: "Newyork" },
+]
 
 export default function Home() {
   const [partners, setPartners] = useState([]);
@@ -11,6 +23,8 @@ export default function Home() {
   const [editPartner, setEditPartner] = useState(false);
   const [createPartner, setCreatePartner] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState(null);
+
   const [formData, setFormData] = useState({
     id: "",
     name: "",
@@ -19,7 +33,6 @@ export default function Home() {
     region: "",
     address: ""
   });
-
 
   useEffect(() => {
     getPartners();
@@ -33,6 +46,15 @@ export default function Home() {
       console.error("Error is: ", err);
     }
   }
+
+  const handleCountrySelect = (selectedOption) => {
+    setSelectedCountry(selectedOption);
+    setFormData(pre => ({
+      ...pre,
+      region: selectedOption?.label
+    }
+    ))
+  };
 
   function handlePartner(id) {
     window.location.href = `partner/${id}`;
@@ -48,6 +70,7 @@ export default function Home() {
   }
 
   function handleEdit(p, i) {
+    setSelectedCountry({ label: p?.region })
     setError(null);
     setPartnerId(p?.id);
     setFormData(partners[i]);
@@ -57,7 +80,7 @@ export default function Home() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-
+    
     if (!formData.id) {
       setError("ID is required");
       return;
@@ -125,7 +148,8 @@ export default function Home() {
           <h1>Welcome to partner portal app</h1>
           <button onClick={() => {
             setError(null);
-            setFormData({})
+            setFormData({});
+            setSelectedCountry(null);
             setPopupBtnName("Create");
             setShowCreatePopup(true);
           }}>Create</button>
@@ -191,12 +215,14 @@ export default function Home() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Region:</label>
-                  <input
-                    type="text"
-                    name="region"
-                    value={formData.region || ''}
-                    onChange={handleInputChange}
+                  {/* <label>Region:</label> */}
+                  <Select
+                    options={countries}
+                    value={selectedCountry}
+                    onChange={handleCountrySelect}
+                    isSearchable={true}
+                    placeholder="Select a country..."
+                    styles={{ backgroundColor: "white"}}
                   />
                 </div>
                 <div className="form-group">

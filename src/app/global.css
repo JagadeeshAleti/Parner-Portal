@@ -185,3 +185,11 @@ button[type="submit"] {
 }
 
 /* Add more styles as needed */
+.react-select__menu {
+  background-color: white;
+}
+
+/* If using an ID or additional classes */
+#my-custom-select.react-select__menu {
+  background-color: white;
+}
