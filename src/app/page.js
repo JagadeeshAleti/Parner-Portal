@@ -13,7 +13,28 @@ const countries = [
   { label: "Italy" },
   { label: "Seria" },
   { label: "Newyork" },
-]
+];
+
+const tiers = [
+  { label: "Bornze" },
+  { label: "Silver" },
+  { label: "Gold" },
+  { label: "Platinum" },
+];
+
+const milestonesOptions = [
+  { value: 'nda', label: 'NDA' },
+  { value: 'portal-access', label: 'Portal Access' },
+  { value: 'sales-training', label: 'Sales Training' },
+  { value: 'product-training', label: 'Product Training' },
+  { value: 'demo-account', label: 'Demo Account' },
+  { value: 'certification', label: 'Certification' },
+];
+
+function getLabel(value) {
+  const milestone = milestonesOptions.find(option => option.value === value);
+  return milestone?.label;
+}
 
 export default function Home() {
   const [partners, setPartners] = useState([]);
@@ -24,6 +45,9 @@ export default function Home() {
   const [createPartner, setCreatePartner] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedTire, setSelectedTire] = useState(null);
+  const [discount, setDiscount] = useState('');
+  const [selectedMilestones, setSelectedMilestones] = useState([]);
 
   const [formData, setFormData] = useState({
     id: "",
@@ -56,6 +80,25 @@ export default function Home() {
     ))
   };
 
+  const handleTireSelect = (selectedOption) => {
+    setSelectedTire(selectedOption);
+    setFormData(pre => ({
+      ...pre,
+      tier: selectedOption?.label
+    }
+    ))
+  };
+
+  const handleMilestonesSelect = (selectedOptions) => {
+    setSelectedMilestones(selectedOptions);
+    const mileStones = selectedOptions.map(o => o.value);
+    setFormData(pre => ({
+      ...pre,
+      milestones: mileStones
+    }
+    ))
+  };
+
   function handlePartner(id) {
     window.location.href = `partner/${id}`;
   };
@@ -65,12 +108,26 @@ export default function Home() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: (name === 'discount') ? value / 100 : value
     });
   }
 
   function handleEdit(p, i) {
-    setSelectedCountry({ label: p?.region })
+    setDiscount(() => {
+      const value = parseFloat(p?.discount);
+      const d = isNaN(value) ? '' : (value * 100);
+      return d;
+    });
+    setSelectedMilestones(() => {
+      const milestones = p?.milestones;
+      const selected = milestones?.map(m => ({
+        label: getLabel(m),
+        value: m
+      }));
+      return selected;
+    })
+    setSelectedTire(() => !p?.tier ? null : { label: p?.tier });
+    setSelectedCountry(() => !p?.region ? null : { label: p?.region });
     setError(null);
     setPartnerId(p?.id);
     setFormData(partners[i]);
@@ -80,7 +137,7 @@ export default function Home() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    
+
     if (!formData.id) {
       setError("ID is required");
       return;
@@ -112,17 +169,14 @@ export default function Home() {
         await axios.post(`http://localhost:3001/admin/partner`, formData, headers);
       } else if (popupBtnName === "Edit") {
         setEditPartner(true);
-        const { name, email, phone, region, address } = formData;
-        const body = { name, email, phone, region, address };
+        const { name, email, phone, region, address, tier, milestones } = formData;
+        const body = { name, email, phone, region, address, tier, milestones, discount: discount / 100 };
         await axios.patch(`http://localhost:3001/admin/partner/${partnerId}`, body, headers);
       }
       setEditPartner(false);
       setCreatePartner(false);
-      setFormData({
-        name: "",
-        email: "",
-        phone: ""
-      });
+      setFormData({});
+      setSelectedMilestones([]);
       setShowCreatePopup(false);
       getPartners();
     } catch (err) {
@@ -144,6 +198,7 @@ export default function Home() {
         {createPartner ? "Creating New Partner" : "Updating Parner Details"}
       </div> :
       <div className="main">
+
         <div className="header">
           <h1>Welcome to partner portal app</h1>
           <button onClick={() => {
@@ -154,6 +209,7 @@ export default function Home() {
             setShowCreatePopup(true);
           }}>Create</button>
         </div>
+
         <ul className="partners">
           {partners.length > 0 && partners.map((partner, i) => (
             <li key={partner.id} className="partner">
@@ -214,17 +270,50 @@ export default function Home() {
                     onChange={handleInputChange}
                   />
                 </div>
-                <div className="form-group">
-                  {/* <label>Region:</label> */}
+                <div className="form-group two-fields">
                   <Select
                     options={countries}
                     value={selectedCountry}
                     onChange={handleCountrySelect}
                     isSearchable={true}
                     placeholder="Select a country..."
-                    styles={{ backgroundColor: "white"}}
                   />
+                  {popupBtnName === "Edit" &&
+                    <Select
+                      options={tiers}
+                      value={selectedTire}
+                      onChange={handleTireSelect}
+                      isSearchable={true}
+                      placeholder="Select a Tire..."
+                    />
+                  }
                 </div>
+
+                {popupBtnName === "Edit" &&
+                  <>
+                    <div className="form-group">
+                      <Select
+                        options={milestonesOptions}
+                        value={selectedMilestones}
+                        onChange={handleMilestonesSelect}
+                        isMulti
+                        placeholder="Select milestones..."
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Discount:</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={discount}
+                        onChange={e => {
+                          const value = parseFloat(e.target.value);
+                          setDiscount(isNaN(value) ? '' : value);
+                        }}
+                      />
+                    </div>
+                  </>
+                }
                 <div className="form-group">
                   <label>Address:</label>
                   <input
